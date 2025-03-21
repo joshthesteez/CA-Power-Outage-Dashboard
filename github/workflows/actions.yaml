@@ -22,7 +22,7 @@ jobs:
           pip install pandas requests
           
       - name: Fetch power outage data
-        run: python scripts/fetch_outage_data.py
+        run: python scripts/collect.py
         
       - name: Commit and push if changes
         run: |
