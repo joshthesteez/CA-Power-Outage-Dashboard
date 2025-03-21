@@ -26,35 +26,55 @@ master_csv = "data/power_outage_master.csv"
 # Save current snapshot
 df.to_csv(csv_filename, index=False)
 
-# Check if master file exists and handle accordingly
-if os.path.exists(master_csv):
-    # Read existing master data
-    master_df = pd.read_csv(master_csv)
-    
-    # Create a unique identifier for each outage record
-    # Using IncidentID (or OBJECTID), StartDateTime, and UtilityCompany as composite key
-    df['unique_key'] = df['OBJECTID'].astype(str) + '_' + df['StartDateTime'].astype(str) + '_' + df['UtilityCompany'].astype(str)
-    master_df['unique_key'] = master_df['OBJECTID'].astype(str) + '_' + master_df['StartDateTime'].astype(str) + '_' + master_df['UtilityCompany'].astype(str)
-    
-    # Filter out records that already exist in the master file
-    new_records = df[~df['unique_key'].isin(master_df['unique_key'])]
-    
-    # Remove the temporary unique_key column
-    new_records = new_records.drop('unique_key', axis=1)
-    
-    # If there are new records, append them to the master file
-    if not new_records.empty:
-        new_records.to_csv(master_csv, mode='a', header=False, index=False)
-        print(f"Added {len(new_records)} new records at {collection_time}")
+try:
+    # Check if OBJECTID exists in the dataframe
+    if 'OBJECTID' in df.columns:
+        # Check if master file exists
+        if os.path.exists(master_csv):
+            # Read existing master data
+            master_df = pd.read_csv(master_csv)
+            
+            # Convert OBJECTID to string in both dataframes
+            df['OBJECTID_str'] = df['OBJECTID'].astype(str)
+            
+            # Create the same key in master_df if needed
+            if 'OBJECTID_str' not in master_df.columns and 'OBJECTID' in master_df.columns:
+                master_df['OBJECTID_str'] = master_df['OBJECTID'].astype(str)
+            
+            # Filter out records that already exist
+            new_records = df[~df['OBJECTID_str'].isin(master_df['OBJECTID_str'])]
+            
+            # Remove the temporary column
+            new_records = new_records.drop('OBJECTID_str', axis=1)
+            
+            # If there are new records, append them
+            if not new_records.empty:
+                new_records.to_csv(master_csv, mode='a', header=False, index=False)
+                print(f"Added {len(new_records)} new records at {collection_time}")
+            else:
+                print(f"No new records to add at {collection_time}")
+            
+            # Clean up
+            df = df.drop('OBJECTID_str', axis=1)
+        else:
+            # If master file doesn't exist, create it
+            df.to_csv(master_csv, index=False)
+            print(f"Created master file with {len(df)} records at {collection_time}")
     else:
-        print(f"No new records to add at {collection_time}")
+        # If we can't find OBJECTID, fallback to appending all data
+        print(f"WARNING: Could not find OBJECTID column. Appending all data without deduplication.")
+        if os.path.exists(master_csv):
+            df.to_csv(master_csv, mode='a', header=False, index=False)
+        else:
+            df.to_csv(master_csv, index=False)
         
-    # Clean up
-    df = df.drop('unique_key', axis=1)
-    
-else:
-    # If master file doesn't exist, create it
-    df.to_csv(master_csv, index=False)
-    print(f"Created master file with {len(df)} records at {collection_time}")
+except Exception as e:
+    print(f"ERROR: {str(e)}")
+    print("Fallback: Appending all data without deduplication")
+    # Fallback approach - just append the data
+    if os.path.exists(master_csv):
+        df.to_csv(master_csv, mode='a', header=False, index=False)
+    else:
+        df.to_csv(master_csv, index=False)
 
 print(f"Data collection process completed at {collection_time}")
