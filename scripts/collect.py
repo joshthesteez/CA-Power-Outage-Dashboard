@@ -33,8 +33,8 @@ if os.path.exists(master_csv):
     
     # Create a unique identifier for each outage record
     # Using IncidentID (or OBJECTID), StartDateTime, and UtilityCompany as composite key
-    df['unique_key'] = df['IndicentID'].astype(str) + '_' + df['StartDateTime'].astype(str) + '_' + df['UtilityCompany'].astype(str)
-    master_df['unique_key'] = master_df['IndicentID'].astype(str) + '_' + master_df['StartDateTime'].astype(str) + '_' + master_df['UtilityCompany'].astype(str)
+    df['unique_key'] = df['IncidentID'].astype(str) + '_' + df['StartDateTime'].astype(str) + '_' + df['UtilityCompany'].astype(str)
+    master_df['unique_key'] = master_df['IncidentID'].astype(str) + '_' + master_df['StartDateTime'].astype(str) + '_' + master_df['UtilityCompany'].astype(str)
     
     # Filter out records that already exist in the master file
     new_records = df[~df['unique_key'].isin(master_df['unique_key'])]
