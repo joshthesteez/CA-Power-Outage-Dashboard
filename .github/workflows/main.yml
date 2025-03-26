@@ -2,7 +2,7 @@ name: Collect Power Outage Data
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Run hourly
+    - cron: '* * * * *'  # stopping execution for now
   workflow_dispatch:  # Allow manual triggers
 
 jobs:
